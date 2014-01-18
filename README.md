@@ -1,7 +1,7 @@
 929
 ===
 
-An easy way to know when tickets go on sale at the 930 club website.
+An easy way to know when tickets go on sale on the 930 club website.
 
 The program scrapes a list of concerts sites for new links.  The links are
 extracted from the HTML and then filtered through a bloom filter for new links.
