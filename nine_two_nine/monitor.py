@@ -23,8 +23,14 @@ class Monitor(object):
     while True:
       for url in self.sites:
         html = self.scrape_url(url)
+        logging.info("HTML fetched.")
+
         fetched_links = self.extract_links(html, url)
+        logging.info("Links extracted.")
+
         filtered_links = self.filter_links(fetched_links)
+        logging.info("Links filtered.")
+        
         self.notify_via_email(filtered_links)
         time.sleep(self.sleeptime)
 
@@ -89,13 +95,11 @@ class Monitor(object):
   def notify_via_email(self, links):
     message = "\n".join(links)
 
-    try:
-      server = smtplib.SMTP('smtp.gmail.com:587')  
-      server.starttls()  
-      server.login(self.username, self.password) 
+    server = smtplib.SMTP('smtp.gmail.com:587')  
+    server.starttls()  
+    server.login(self.username, self.password) 
 
-      server.sendmail(self.from_email, self.to_email, message)  
-      server.quit()
-      logging.info("Email successfully sent.")
-    except :
-      logging.error("Email failed to send.")
+    server.sendmail(self.from_email, self.to_email, message)  
+    server.quit()
+    logging.info("Email successfully sent.")
+
