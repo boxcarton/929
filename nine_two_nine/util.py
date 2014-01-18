@@ -52,7 +52,7 @@ def load_config(module_name, cfg_file=None):
         base_config = {}
     else:
         base_config = load_config(None, cfg_file)
-
+        
     configspec = resource_stream(module_name, 'defaults.ini')
     config = ConfigObj(cfg_file, configspec=configspec)
     validator = Validator()

@@ -6,25 +6,27 @@ import requests
 from util import guess_encoding, convert_to_unicode
 import time
 import smtplib
+from email.mime.text import MIMEText
 
 class Monitor(object):
   def __init__(self, sites, from_email, to_email, username, password,
                bloom_filter, sleeptime=300):
     self.sites = sites
-    self.email = email
+    self.to_email = to_email
+    self.from_email = from_email
     self.username = username
     self.password = password
     self.sleeptime = sleeptime
     self.bf = bloom_filter
 
-  def run(self):
+  def monitor_sites(self):
     while True:
-      for url in sites:
-        html = scrape_url(url)
+      for url in self.sites:
+        html = self.scrape_url(url)
         fetched_links = self.extract_links(html, url)
         filtered_links = self.filter_links(fetched_links)
-        for link in filtered_links:
-          self.notify_via_email(link)
+        self.notify_via_email(filtered_links)
+        time.sleep(self.sleeptime)
 
   def scrape_url(self, url):
     r = None
@@ -63,8 +65,7 @@ class Monitor(object):
     base = soup.find_all('base', limit=1)
     if base and base[0].has_attr('href'):
       root_url = base[0]['href'].strip()
-      
-    # TODO: Check for and handle invalid URLs
+
     try:
       links = [urljoin(root_url.strip(), l['href'].strip()) for l in soup.find_all('a')
               if isinstance(l, bs4.element.Tag) and l.has_attr('href')]
@@ -79,26 +80,22 @@ class Monitor(object):
     for link in links:
       if link.startswith('mailto'):
         self.bf.add(link)
-      if link not in bf:
+      if link not in self.bf:
+        logging.info("New link found: " + link)
         new_links.append(link)
         self.bf.add(link)
     return new_links
 
-  def notify_via_email(self, link):
-    subject = "New link found by nine_two_nine"
-    message = """\From: %s\n
-                  To: %s\n
-                  Subject: %s\n\n
-                  %s
-              """ % (FROM, ", ".join([self.to_email]), subject, link)
+  def notify_via_email(self, links):
+    message = "\n".join(links)
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587) #or port 465
-        server.ehlo()
-        server.starttls()
-        server.login(self.username, self.password)
-        server.sendmail(self.from_email, self.to_email, message)
-        server.close()
-        logging.info("Email successfully sent.")
-    except:
-        logging.error("Email failed to send.")
+      server = smtplib.SMTP('smtp.gmail.com:587')  
+      server.starttls()  
+      server.login(self.username, self.password) 
+
+      server.sendmail(self.from_email, self.to_email, message)  
+      server.quit()
+      logging.info("Email successfully sent.")
+    except :
+      logging.error("Email failed to send.")
